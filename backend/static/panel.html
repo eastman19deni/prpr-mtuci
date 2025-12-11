@@ -5,161 +5,318 @@
     <title>Room Occupancy Panel</title>
 
     <style>
+        :root {
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-strong: rgba(255, 255, 255, 0.12);
+            --text: #e2e8f0;
+            --accent: #7c3aed;
+            --accent-2: #22d3ee;
+            --error: #f87171;
+        }
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f5f6fa;
+            font-family: "Inter", Arial, sans-serif;
+            background: radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.25), transparent 30%),
+                        radial-gradient(circle at 80% 0%, rgba(34, 211, 238, 0.25), transparent 30%),
+                        var(--bg);
             margin: 0;
-            padding: 40px;
-            color: #333;
+            padding: 48px;
+            color: var(--text);
+            min-height: 100vh;
         }
 
         h2, h3 {
-            font-weight: 600;
-            margin-bottom: 15px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            margin-bottom: 14px;
         }
 
-        /* Карточка */
-        #panel {
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            align-items: start;
+        }
+
+        .card {
+            background: var(--glass);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
             padding: 20px;
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 3px 14px rgba(0,0,0,0.1);
-            width: 320px;
-            margin-top: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(34,211,238,0.08));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .card:hover::after {
+            opacity: 1;
         }
 
         #count {
-            font-size: 36px;
-            font-weight: bold;
-            margin-top: 10px;
-            background: #eef0f4;
-            padding: 12px;
+            font-size: 42px;
+            font-weight: 800;
+            margin-top: 14px;
+            background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(34,211,238,0.25));
+            padding: 14px;
             text-align: center;
-            border-radius: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-strong);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #count.bump {
+            transform: scale(1.04);
+            box-shadow: 0 15px 40px rgba(124, 58, 237, 0.25);
         }
 
         .error {
-            color: #c0392b;
+            color: var(--error);
             margin-top: 10px;
-            font-weight: bold;
+            font-weight: 600;
             min-height: 22px;
         }
 
         /* Формы */
         #form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .uploader {
+            position: relative;
             padding: 18px;
-            background: #ffffff;
+            border: 1px dashed rgba(255,255,255,0.25);
             border-radius: 14px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            width: 320px;
+            background: var(--glass);
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .uploader:hover {
+            border-color: var(--accent-2);
+            background: rgba(255,255,255,0.12);
         }
 
         #form input[type=file] {
-            margin-bottom: 12px;
+            color: var(--text);
         }
 
         button {
-            padding: 10px 16px;
+            padding: 12px 16px;
             border: none;
-            border-radius: 10px;
-            background: #4a90e2;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
             color: white;
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: 0.25s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.35);
         }
 
         button:hover {
-            background: #3b7ac3;
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
         }
 
         /* Таблица */
         table {
             border-collapse: collapse;
-            margin-top: 25px;
-            width: 700px;
-            background: white;
-            border-radius: 10px;
+            margin-top: 10px;
+            width: 100%;
+            background: var(--glass);
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        }
+
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
         th {
-            background: #f0f2f6;
-            padding: 10px;
-            font-weight: 600;
-            border-bottom: 1px solid #ddd;
+            background: rgba(255,255,255,0.06);
+            font-weight: 700;
+            text-align: left;
         }
 
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
+        tr:last-child td { border-bottom: none; }
 
         tr:hover td {
-            background: #f7f9fc;
+            background: rgba(124,58,237,0.07);
+        }
+
+        /* Лоадер */
+        .loader {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .loader.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            animation: pulse 0.9s infinite ease-in-out alternate;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.15s; }
+        .dot:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes pulse {
+            from { transform: translateY(2px); opacity: 0.6; }
+            to { transform: translateY(-4px); opacity: 1; }
+        }
+
+        /* Fade-in */
+        .fade {
+            opacity: 0;
+            transform: translateY(8px);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .fade-delayed { animation-delay: 0.15s; }
+
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
 
-<h2>Upload video</h2>
+<h2 class="fade">Room Occupancy</h2>
 
-<form id="form">
-    <input type="file" name="file">
-    <br>
-    <button type="submit">Analyze</button>
-</form>
+<div class="grid">
+    <div class="card fade">
+        <div class="loader" id="loader">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <span>Processing...</span>
+        </div>
 
-<div id="panel">
-    <div>People detected:</div>
-    <div id="count">–</div>
-    <div id="error" class="error"></div>
+        <form id="form">
+            <div class="uploader">
+                <input type="file" name="file" accept="video/*">
+            </div>
+            <button type="submit" id="btn">Analyze video</button>
+        </form>
+    </div>
+
+    <div class="card fade fade-delayed" id="panel">
+        <div>People detected:</div>
+        <div id="count">–</div>
+        <div id="error" class="error"></div>
+    </div>
 </div>
 
-<h3>History</h3>
-<table id="history"></table>
+<h3 class="fade" style="margin-top:28px;">History</h3>
+<div class="card fade">
+    <table id="history"></table>
+</div>
 
 <script>
-async function loadHistory() {
-    let r = await fetch("http://localhost:8000/history");
-    let data = await r.json();
+const loader = document.getElementById("loader");
+const countEl = document.getElementById("count");
+const errorEl = document.getElementById("error");
+const btn = document.getElementById("btn");
 
-    let table = "<tr><th>ID</th><th>File</th><th>People</th><th>Time</th></tr>";
-    data.forEach(x => {
-        table += `<tr>
-            <td>${x.id}</td>
-            <td>${x.filename}</td>
-            <td>${x.people_count}</td>
-            <td>${x.timestamp}</td>
-        </tr>`;
-    });
-    document.getElementById("history").innerHTML = table;
+async function loadHistory() {
+    try {
+        let r = await fetch("http://localhost:8000/history");
+        let data = await r.json();
+
+        let table = "<tr><th>ID</th><th>File</th><th>People</th><th>Time</th></tr>";
+        data.forEach(x => {
+            table += `<tr>
+                <td>${x.id}</td>
+                <td>${x.filename}</td>
+                <td>${x.people_count}</td>
+                <td>${new Date(x.timestamp).toLocaleString()}</td>
+            </tr>`;
+        });
+        document.getElementById("history").innerHTML = table;
+    } catch (e) {
+        document.getElementById("history").innerHTML = "<tr><td>Failed to load history</td></tr>";
+    }
 }
 
 document.getElementById("form").onsubmit = async (e) => {
     e.preventDefault();
-    document.getElementById("error").textContent = "";
-    document.getElementById("count").textContent = "…";
+    errorEl.textContent = "";
+    countEl.textContent = "…";
+    loader.classList.add("show");
+    btn.disabled = true;
 
     let fd = new FormData(e.target);
 
-    let r = await fetch("http://localhost:8000/analyze", {
-        method: "POST",
-        body: fd
-    });
+    try {
+        let r = await fetch("http://localhost:8000/analyze", {
+            method: "POST",
+            body: fd
+        });
 
-    if (!r.ok) {
-        let err = await r.json();
-        document.getElementById("error").textContent = err.detail || "Error";
-        document.getElementById("count").textContent = "–";
-        return;
+        if (!r.ok) {
+            let err = await r.json();
+            errorEl.textContent = err.detail || "Error";
+            countEl.textContent = "–";
+            return;
+        }
+
+        let res = await r.json();
+        countEl.textContent = res.people_count;
+        countEl.classList.add("bump");
+        setTimeout(() => countEl.classList.remove("bump"), 400);
+        loadHistory();
+    } catch (err) {
+        errorEl.textContent = "Network error";
+        countEl.textContent = "–";
+    } finally {
+        loader.classList.remove("show");
+        btn.disabled = false;
     }
-
-    let res = await r.json();
-    document.getElementById("count").textContent = res.people_count;
-    loadHistory();
 };
 
 loadHistory();
