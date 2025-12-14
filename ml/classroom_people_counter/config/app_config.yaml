@@ -1,0 +1,23 @@
+paths:
+  input: data/input
+  output: data/output
+  temp: data/temp
+  db: data/output/database/attendance.db
+
+model:
+  cfg_path: models/yolov3.cfg
+  weights_path: models/yolov3.weights
+  names_path: models/coco.names
+  conf_threshold: 0.5
+  nms_threshold: 0.4
+
+detection:
+  desks:
+    - name: desk_1
+      rect: [50, 200, 250, 350]
+    - name: desk_2
+      rect: [300, 200, 500, 350]
+
+logging:
+  file: logs/app.log
+  level: INFO

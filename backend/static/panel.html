@@ -3,37 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <title>Room Occupancy Panel</title>
-
+    <link rel="stylesheet" href="/static/panel.css">
 </head>
 <body>
 
-<h2 class="fade">Room Occupancy</h2>
+<h2 class="fade">Отслеживание загруженности</h2>
 
 <div class="grid">
     <div class="card fade">
         <div class="loader" id="loader">
             <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            <span>Processing...</span>
+            <span>загрузка...</span>
         </div>
 
         <form id="form">
             <div class="uploader">
                 <input type="file" name="file" accept="video/*">
             </div>
-            <input type="text" id="room" name="room" placeholder="Enter room (e.g., 101)" list="rooms-list" required style="padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:var(--text);">
+            <input type="text" id="room" name="room" class="room-input" placeholder="Enter room (e.g., 101)" list="rooms-list" required>
             <datalist id="rooms-list"></datalist>
-            <button type="submit" id="btn">Analyze video</button>
+            <button type="submit" id="btn">Анализ видео</button>
         </form>
     </div>
 
     <div class="card fade fade-delayed" id="panel">
-        <div>People detected:</div>
+        <div>Людей обнаружено:</div>
         <div id="count">–</div>
         <div id="error" class="error"></div>
     </div>
 </div>
 
-<h3 class="fade" style="margin-top:28px;">History</h3>
+<h3 class="fade" style="margin-top:28px;">История</h3>
 <div class="card fade">
     <table id="history"></table>
 </div>
@@ -48,17 +48,17 @@ const roomsList = document.getElementById("rooms-list");
 
 async function loadRooms() {
     try {
-        let r = await fetch("http://localhost:8000/rooms");
+        let r = await fetch("/rooms");
         let data = await r.json();
         roomsList.innerHTML = data.map(x => `<option value="${x.name}"></option>`).join("");
     } catch (e) {
-        // ignore
+        console.error("Failed to load rooms:", e);
     }
 }
 
 async function loadHistory() {
     try {
-        let r = await fetch("http://localhost:8000/history");
+        let r = await fetch("/history");
         let data = await r.json();
 
         let table = "<tr><th>ID</th><th>Room</th><th>File</th><th>People</th><th>Time</th></tr>";
@@ -93,13 +93,13 @@ document.getElementById("form").onsubmit = async (e) => {
     }
 
     try {
-        let r = await fetch("http://localhost:8000/analyze", {
+        let r = await fetch("/analyze", {
             method: "POST",
             body: fd
         });
 
         if (!r.ok) {
-            let err = await r.json();
+            let err = await r.json().catch(() => ({ detail: `HTTP ${r.status}: ${r.statusText}` }));
             errorEl.textContent = err.detail || "Error";
             countEl.textContent = "–";
             return;
@@ -112,7 +112,8 @@ document.getElementById("form").onsubmit = async (e) => {
         loadHistory();
         loadRooms();
     } catch (err) {
-        errorEl.textContent = "Network error";
+        console.error("Network error:", err);
+        errorEl.textContent = `Network error: ${err.message || "Failed to connect to server"}`;
         countEl.textContent = "–";
     } finally {
         loader.classList.remove("show");

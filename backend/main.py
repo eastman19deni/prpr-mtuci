@@ -5,6 +5,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database import Base, engine, SessionLocal
 from backend.errors import validation_exception_handler, general_exception_handler
@@ -15,16 +16,22 @@ app = FastAPI()
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-# Paths are resolved relative to this file so uvicorn can be run from project root.
+# CORS для работы фронтенда
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # В продакшене укажи конкретные домены
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 UPLOAD_DIR = os.path.join(STATIC_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Create tables on startup
 Base.metadata.create_all(bind=engine)
 
-# Serve static assets
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
@@ -44,7 +51,6 @@ def analyze_video(room: str = Form(...), file: UploadFile = File(...)):
     filename = f"{datetime.utcnow().timestamp()}_{file.filename}"
     filepath = os.path.join(UPLOAD_DIR, filename)
 
-    # Save video to disk
     try:
         with open(filepath, "wb") as f:
             f.write(file.file.read())
