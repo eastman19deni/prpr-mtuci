@@ -61,10 +61,9 @@ async function loadHistory() {
         let r = await fetch("/history");
         let data = await r.json();
 
-        let table = "<tr><th>ID</th><th>Room</th><th>File</th><th>People</th><th>Time</th></tr>";
+        let table = "<tr><th>Room</th><th>File</th><th>People</th><th>Time</th></tr>";
         data.forEach(x => {
             table += `<tr>
-                <td>${x.id}</td>
                 <td>${x.room || "—"}</td>
                 <td>${x.filename}</td>
                 <td>${x.people_count}</td>
